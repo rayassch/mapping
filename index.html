@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Map</title>
+  <meta charset="utf-8">
+  
+  <meta name='viewport' content='width=device-width, user-scalable=no initial-scale=1, maximum-scale=1'>
+	
+  <!-- Load Leaflet: instructions at http://leafletjs.com/download.html -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
+  integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+  crossorigin="anonymous"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  
+  <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
+  integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
+  crossorigin="anonymous"></script>                
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  
+  <!-- Load Omnivore plugin to convert CSV to GeoJSON format: zie https://github.com/mapbox/leaflet-omnivore voor laatste versie-->
+  <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+  
+  <!-- Locate Control laatste versie: https://cdnjs.com/libraries/leaflet-locatecontrol-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.62.0/L.Control.Locate.mapbox.min.css"/> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-locatecontrol/0.62.0/L.Control.Locate.min.js"></script>
+    
+  <!-- Met dit stukje code wordt de kaart schermvullend -->
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+	
+</head>
+<body>
+	<div id="map"></div>
+   
+    <script>
+  var map = L.map('map').setView([52.09, 5.10], 8);
+       
+    
+  /* Control panel to display map layers */
+  var controlLayers = L.control.layers( null, null, {
+    position: "topright",
+    //collapsed: false
+   }).addTo(map);
+  
+   /* code voor search box t-m regel 52 */
+   //var geocoder = L.Control.Geocoder.mapzen('search-DopSHJw'),
+			//control = L.Control.geocoder({
+				//geocoder: geocoder
+			//}).addTo(map),
+			//marker;
+   
+   /* code voor search box optie 2 t-m regel 72 */   
+   var geocoder = L.Control.geocoder({
+        //expand: 'click',
+        position: "topright",
+        geocoder: new L.Control.Geocoder.Nominatim({
+          geocodingQueryParams: {
+            viewbox: [],  // by default, viewbox is empty
+            bounded: 0,
+          }
+        }),
+      }).addTo(map);
+
+      function updateGeocoderBounds() {
+        var bounds = map.getBounds();
+        var mapBounds = [
+          bounds._southWest.lat, bounds._northEast.lat,
+          bounds._southWest.lng, bounds._northEast.lng,
+        ];
+        geocoder.options.geocoder.options.geocodingQueryParams.viewbox = mapBounds;
+      }
+	    
+   // Add location control
+   var locationControl = L.control.locate({
+     keepCurrentZoomLevel: true,
+     returnToPrevBounds: true,
+     position: "topright",
+     strings: {
+        title: "Show me where I am"}
+     }).addTo(map);
+     
+	    
+  var carto = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+    attribution: 'Map by <a href="http://openstreetmap.org">OpenStreetMap</a>, Map tile by <a href="https://carto.com/attribution">CARTO</a>',
+    maxZoom: 18,
+  }).addTo(map); // EDIT - insert or remove ".addTo(map)" before last semicolon to display by default
+   controlLayers.addBaseLayer(carto, 'Carto Light basemap');
+   /* code voor search box t-m regel 103 */
+   map.on('click', function(e) {
+			geocoder.reverse(e.latlng, map.options.crs.scale(map.getZoom()), function(results) {
+				var r = results[0];
+				if (r) {
+					if (marker) {
+						marker.
+							setLatLng(r.center).
+							setPopupContent(r.html || r.name).
+							openPopup();
+					} else {
+						marker = L.marker(r.center).bindPopup(r.name).addTo(map).openPopup();
+					}
+				}
+			})
+		})
+       
+  /* Stamen colored terrain basemap tiles with labels */
+  var stamen = L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
+    attribution: 'Map by <a href="http://openstreetmap.org">OpenStreetMap</a>, Map tile by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>',
+    maxZoom: 18,
+  }); // EDIT - insert or remove ".addTo(map)" before last semicolon to display by default
+   controlLayers.addBaseLayer(stamen, 'Stamen Toner basemap'); 
+            
+       
+        /* Display a blue point marker with pop-up text */
+        var marker1 = L.marker([52.0582722, 4.4823231], 
+            {title: 'TP'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Zoetermeer</b><br>Ierlandlaan 45<br>2713 HH Zoetermeer"); // the <b> tags will make the text bold and the <br> tag will insert a line break
+
+        
+        var marker2 = L.marker([52.3075498, 4.9416642], 
+            {title: 'TP'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Amsterdam</b><br><b>Building Diana & Vesta</b><br>Herikerbergweg 292-342<br>1101 CT Amsterdam-Zuidoost");
+            
+        var marker3 = L.marker([50.839624, 5.712979], 
+            {title: 'TP'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Maastricht</b><br>Paul-Henri Spaaklaan 7-9 <br>6229 EN Maastricht");             
+        var marker4 = L.marker([51.5598017, 5.0851759], 
+            {title: 'TP'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Tilburg</b><br>Spoorlaan 394<br>5038 CG Tilburg");
+       
+        var marker5 = L.marker([52.0633143, 5.0885952], 
+            {title: 'TP'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br><b>Secoya Building, gebouw B</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+        
+        var marker6 = L.marker([52.0650493, 4.4937703], 
+            {title: 'TP'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Zoetermeer</b><br>Orfeoschouw 70<br>2726 JH Zoetermeer");
+        
+        var marker7 = L.marker([52.0658329, 5.0893222], 
+            {title: 'BC'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Bol</b><br><b>WTC</b><br>Papendorpseweg 96<br>3528 BJ Utrecht");
+        
+	var marker8 = L.marker([52.3497681, 4.9036223], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Polish Bar Sami Swoi</b><br>Van Woustraat 232<br>1073 NC Amsterdam<br><b>Bijzonderheden: </b>Poolse Bar<br><b>Openingstijden: </b> XXXX-XXX");
+
+        var marker9 = L.marker([52.6320181, 4.9497553], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Klub Klimat Holandia</b><br><b>www.klub-klimat.nl</b><br>De Burg 6<br>1648 JT De Goorn<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	    
+	var marker10 = L.marker([52.0435065, 5.6690572], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Cafe Bar Tu jest Polska Spoko Loko</b><br>Maandereind 12C<br>6711 AC Ede<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker11 = L.marker([51.4268093, 5.4929212], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Cafe bar Warszawa</b><br>Heezerweg 123<br>5614 HC Eindhoven<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker12 = L.marker([52.3824985, 4.6275301], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Polski Bar</b><br>Brouwersvaart 146<br>2013 RE Haarlem<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker13 = L.marker([52.0701085, 4.2786418], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Farenheit</b><br>Fahrenheitstraat 22<br>2561 EC Den Haag<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker14 = L.marker([51.448382, 6.0522833], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>The Shuffle</b><br>Gasthuisstraat 36<br>5961 GB Horst<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker15 = L.marker([51.6794854, 5.5105492], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Luna</b><br><b>www.luna-lunenburg.nl</b><br>Dorpsstraat 39<br>5472 PH Loosbroek<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker16 = L.marker([51.9948044, 4.2078856], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Teejater</b><br>Havenstraat 43<br>2671 GH Naaldwijk<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker17 = L.marker([51.7696137, 5.5303308], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Cafe Disco</b><br>Berghemseweg 33<br>5348 CA Oss<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker18 = L.marker([51.9186895, 4.3983815], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Bar Bocian</b><br>Ooievaarsteeg 1<br>3111 NS Schiedam<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker19 = L.marker([51.5574887, 5.0840521], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Sami Swoi</b><br><b>www.samiswoitilburg.nl</b><br>Tuinstraat 59<br>5038 DB Tilburg<br><b>Bijzonderheden: </b>()<br><b>Aantal mdws: </b> X-XXX");
+	
+	var marker20 = L.marker([52.0952463, 5.122773], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Bar Lekker Belangrijk</b><br>Voorstraat 96<br>3512 AV Utrecht<br><br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker21 = L.marker([51.354804, 6.1258741], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Polski pub Diablica</b><br>Baarlosestraat 324<br>5926 PN Venlo<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker22 = L.marker([51.4975817, 4.6837781], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Wok-Dance</b><br>Antwerpseweg 36<br>4891 CP Rijsbergen<br><b>Bijzonderheden: </b>Discotheek<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker23 = L.marker([51.5588909, 5.0823186], 
+            {title: 'Horeca'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>Dance Mission</b><br>Stationsstraat 21<br>5038 EC Tilburg<br><b>Bijzonderheden: </b>()<br><b>Openingstijden: </b> XXXX-XXX");
+	            
+	var marker24 = L.marker([52.0633143, 5.0885952], 
+            {title: 'Shop'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+	            
+	var marker25 = L.marker([52.0633143, 5.0885952], 
+            {title: 'Shop'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+	            
+	var marker26 = L.marker([52.0633143, 5.0885952], 
+            {title: 'Shop'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+	            
+	var marker27 = L.marker([52.0633143, 5.0885952], 
+            {title: 'Shop'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+	            
+	var marker28 = L.marker([52.0633143, 5.0885952], 
+            {title: 'Shop'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+	            
+	var marker29 = L.marker([52.0633143, 5.0885952], 
+            {title: 'Shop'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+	            
+	var marker30 = L.marker([52.0633143, 5.0885952], 
+            {title: 'Shop'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+	            
+	var marker31 = L.marker([52.0633143, 5.0885952], 
+            {title: 'Shop'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br><b>Secoya Building, gebouw B</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+	            
+	var marker32 = L.marker([52.0633143, 5.0885952], 
+            {title: 'Shop'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br><b>Secoya Building, gebouw B</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+	            
+	var marker33 = L.marker([52.0633143, 5.0885952], 
+            {title: 'Kerk'}
+            )
+            .addTo(map) //hiermee wordt de marker aan de map toegevoegd
+            .bindPopup("<b>TP Utrecht</b><br><b>Secoya Building, gebouw B</b><br>Papendorpseweg 97<br>3528 BJ Utrecht<br><b>Activiteiten: </b>Bol.com<br><b>Aantal mdws: </b> X-XXX");
+	    
+	    
+	    
+	    
+        /* Upload Latitude/Longitude markers from data.csv file, show Title in pop-up, 
+        // and override initial center and zoom to fit all in map 
+        // zie voor format csv file: https://github.com/rayassch/leaflet-map-simple/blob/master/data.csv */
+        //var customLayer = L.geoJson(null, {
+            //onEachFeature: function(feature, layer) {
+            //layer.bindPopup(feature.properties.Title);
+            //}
+        //});
+        //var runLayer = omnivore.csv('data.csv', null, customLayer)
+        //.on('ready', function() {
+            //map.fitBounds(runLayer.getBounds());
+        //}).addTo(map);
+        // controlLayers.addOverlay(customLayer, 'Markers from data.csv');
+
+            
+    </script>
+</body>
+</html>
